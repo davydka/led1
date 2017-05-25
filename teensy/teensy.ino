@@ -1,3 +1,5 @@
+//http://forum.arduino.cc/index.php?topic=396450.0
+
 
 #include <OctoWS2811.h>
 
