@@ -1,4 +1,20 @@
-// Example 6 - Receiving binary data
+
+#include <OctoWS2811.h>
+
+const int ledsPerStrip = 7  ;
+
+DMAMEM int displayMemory[ledsPerStrip*6];
+int drawingMemory[ledsPerStrip*6];
+
+const int config = WS2811_GRB | WS2811_800kHz;
+
+OctoWS2811 leds(ledsPerStrip, displayMemory, drawingMemory, config);
+
+
+
+
+
+
 
 const byte numBytes = 32;
 byte receivedBytes[numBytes];
@@ -7,13 +23,16 @@ byte numReceived = 0;
 boolean newData = false;
 
 void setup() {
-    Serial.begin(9600);
-    Serial.println("<Arduino is ready>");
+  leds.begin();
+  leds.show();
+  
+  Serial.begin(9600);
+  Serial.println("<Arduino is ready>");
 }
 
 void loop() {
-    recvBytesWithStartEndMarkers();
-    handleNewData();
+  recvBytesWithStartEndMarkers();
+  handleNewData();
 }
 
 void recvBytesWithStartEndMarkers() {
@@ -63,12 +82,10 @@ void handleNewData() {
         Serial.print(receivedBytes[4]); //R
         Serial.print(receivedBytes[5]); //G
         Serial.print(receivedBytes[6]); //B
-        
-        for (byte n = 0; n < numReceived; n++) {
-            //Serial.print(receivedBytes[n], HEX);
-            //Serial.print(' ');
-        }
-        //Serial.println();
+
+        leds.setPixel(value, receivedBytes[4], receivedBytes[5], receivedBytes[6]);
+        leds.show();
+  
         newData = false;
     }
 }
