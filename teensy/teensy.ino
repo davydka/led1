@@ -3,7 +3,7 @@
 
 #include <OctoWS2811.h>
 
-const int ledsPerStrip = 7  ;
+const int ledsPerStrip = 144  ;
 
 DMAMEM int displayMemory[ledsPerStrip*6];
 int drawingMemory[ledsPerStrip*6];
@@ -74,11 +74,13 @@ void recvBytesWithStartEndMarkers() {
 void handleNewData() {
     if (newData == true) {
         long value;
-
+ value = receivedBytes[0];
+/*
         value = (long)receivedBytes[0] << 24;
         value += (long)receivedBytes[1] << 16;
         value += (long)receivedBytes[2] << 8;
         value += (long)receivedBytes[3];
+  */
         Serial.print(value); //pixel position
 
         Serial.print(receivedBytes[4]); //R

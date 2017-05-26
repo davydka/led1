@@ -7,34 +7,44 @@ process.stdin.resume();
 process.stdin.setEncoding('utf8');
 
 var count = 0;
-var r = 255;
-process.stdin.on('data', function (text) {
+var rMax = 40;
+var r = rMax;
+var stripLength = 144;
+
+
+var handleStdin = function() {
 	var position = hex32Array(count);
 	count++;
-	if(count == 8 && r == 255){
+	if(count == stripLength && r == rMax){
 		count = 0;
 		r = 0;
-	} else if (count == 8 && r == 0){
+		rMax = rMax - 1;
+		if(rMax == 4)
+			rMax = 40;
+		//console.log(rMax);
+	} else if (count == stripLength && r == 0){
 		count = 0;
-		r = 255;
+		r = rMax;
 	}
 
 	message = [
 		0x3C, //<
 
 		//pixel location
-		position[0],
+		//position[0],
+		count,
 		position[1],
 		position[2],
 		position[3],
 
 		//pixel rgb value
-		decToHex(r),
-		decToHex(0),
-		decToHex(0),
+		//decToHex(r),
+		r,
+		0,
+		0,
 		0x3E //>
 	];
-	console.log('Sending the following over serial: '+message );
+	//console.log('Sending the following over serial: '+message );
 
 	//serialPort.write(Buffer.from(message, "hex"), function(err, results) {
 	//serialPort.write(Buffer.from(message), function(err, results) {
@@ -44,7 +54,9 @@ process.stdin.on('data', function (text) {
 		if(results)
 			console.log('results ' + results);
 	});
-});
+};
+setInterval(handleStdin, 10);
+process.stdin.on('data', handleStdin);
 
 
 
@@ -55,7 +67,7 @@ var serialPort = new SerialPort("/dev/ttyACM0", {
 serialPort.on("open", function () {
 	console.log('open');
 	serialPort.on('data', function(data) {
-		console.log('data received: ' + data);
+		//console.log('data received: ' + data);
 		//console.log(data.toString('utf8'));
 		//console.log(data);
 	});
