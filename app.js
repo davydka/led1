@@ -1,74 +1,117 @@
 var SerialPort = require("serialport");
 var message;
+var dgram = require('dgram');
+var server = dgram.createSocket('udp4');
 
 console.log('starting');
 process.stdin.resume();
 
 process.stdin.setEncoding('utf8');
 
+
 var count = 0;
-var rMax = 40;
+var rMax = 4;
 var r = rMax;
 var stripLength = 144;
 
+var portOpen = false;
+var busy = false;
 
-var handleStdin = function() {
-	var position = hex32Array(count);
-	count++;
-	if(count == stripLength && r == rMax){
-		count = 0;
-		r = 0;
-		rMax = rMax - 1;
-		if(rMax == 4)
-			rMax = 40;
-		//console.log(rMax);
-	} else if (count == stripLength && r == 0){
-		count = 0;
-		r = rMax;
+server.on('message', function(msg, rinfo){
+	if(!portOpen){
+		console.log('port not open');
+		return;
 	}
+	/*
+	if(busy){
+		console.log('busy');
+		return;
+	}
+	*/
+	//busy = true;
+	//console.log(msg.toString('utf8'));
+	var data = msg.toString('utf8').split(';');
+	//console.log(data);
 
-	message = [
-		0x3C, //<
+	data.map(function(pixel, index){
+		pixel = pixel.split(',');
+		index = index + 1;
 
-		//pixel location
-		//position[0],
-		count,
-		position[1],
-		position[2],
-		position[3],
+		if(pixel == '')
+			return;
 
-		//pixel rgb value
-		//decToHex(r),
-		r,
-		0,
-		0,
-		0x3E //>
-	];
-	//console.log('Sending the following over serial: '+message );
+		var max = 20;
+		var r = parseInt(mapRange(
+			parseInt(pixel[0]),
+			0,
+			255,
+			0,
+			max
+		));
+		var g = parseInt(mapRange(
+			parseInt(pixel[1]),
+			0,
+			255,
+			0,
+			max
+		));
+		var b = parseInt(mapRange(
+			parseInt(pixel[2]),
+			0,
+			255,
+			0,
+			max
+		));
 
-	//serialPort.write(Buffer.from(message, "hex"), function(err, results) {
-	//serialPort.write(Buffer.from(message), function(err, results) {
-	serialPort.write(message, function(err, results) {
-		if(err)
-			console.log('err ' + err);
-		if(results)
-			console.log('results ' + results);
+		message = [
+			0x3C, //<
+			//pixel location
+			index,
+			0,
+			0,
+			0,
+
+			//pixel rgb value
+			r,
+			g,
+			b,
+			0x3E //>
+		]
+		//console.log(message);
+		serialPort.write(message, function(err, results) {
+			if(err)
+				console.log('err ' + err);
+			if(results)
+				console.log('results ' + results);
+		});
 	});
-};
-setInterval(handleStdin, 10);
-process.stdin.on('data', handleStdin);
+	//busy = false;
+	//process.exit();
+
+});
+
+server.on('listening', () => {
+	  const address = server.address();
+	  console.log(`server listening ${address.address}:${address.port}`);
+});
+
+server.bind(11999, '0.0.0.0');
 
 
 
-var serialPort = new SerialPort("/dev/ttyACM0", {
+
+
+//var serialPort = new SerialPort("/dev/ttyACM0", {
+var serialPort = new SerialPort("/dev/cu.usbmodem2809741", {
 	baudrate: 9600
 });
 
 serialPort.on("open", function () {
 	console.log('open');
+	portOpen = true;
 	serialPort.on('data', function(data) {
 		//console.log('data received: ' + data);
-		//console.log(data.toString('utf8'));
+		console.log(data.toString('utf8'));
 		//console.log(data);
 	});
 });
@@ -86,4 +129,8 @@ function hex32Array(val) {
 	var hex = val.toString(16).toUpperCase();
 	hex = ("00000000" + hex).slice(-8);
 	return hex.match(/.{2}/g);
+}
+
+function mapRange(value, low1, high1, low2, high2) {
+	return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
 }

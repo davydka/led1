@@ -81,15 +81,16 @@ void handleNewData() {
         value += (long)receivedBytes[2] << 8;
         value += (long)receivedBytes[3];
   */
-        Serial.print(value); //pixel position
+        //Serial.print(value); //pixel position
 
-        Serial.print(receivedBytes[4]); //R
-        Serial.print(receivedBytes[5]); //G
-        Serial.print(receivedBytes[6]); //B
-
+        //Serial.print(receivedBytes[4]); //R
+        //Serial.print(receivedBytes[5]); //G
+        //Serial.print(receivedBytes[6]); //B
+        Serial.print("new data");
         leds.setPixel(value, receivedBytes[4], receivedBytes[5], receivedBytes[6]);
         leds.show();
   
         newData = false;
+        //Serial.print(!newData);
     }
 }
